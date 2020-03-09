@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, FlatList, Image, Button, Modal, ImageBackground, ScrollView, TextInput } from 'react-native';
+import { Text, View, StyleSheet, FlatList, Image, Button, Modal, ImageBackground, ScrollView, TextInput, Switch, Alert } from 'react-native';
 
 
+import StoryItem from './story-item';
+import indexjs from './index';
 export default function Story({ Username }) {
     const API = 'https://5e64622ea49c2100161069a0.mockapi.io/story'
     const [story, setStory] = useState([]);
     const [listStory, setListStory] = useState(true);
     const [showLoad, setShowLoading] = useState(false);
+    const [showDetail, setShowDetail] = useState(false);
     // const [showModal,setShowModal]=useState(false);
 
     //const add
@@ -14,6 +17,7 @@ export default function Story({ Username }) {
     const [name, setName] = useState('');
     const [category, setCategory] = useState('');
     const [total_chapters, setTotal_chapters] = useState('');
+    const [is_full, setIs_full] = useState(true);
     const [isUpdate, setIsUpdate] = useState(false);
 
 
@@ -38,7 +42,7 @@ export default function Story({ Username }) {
     console.log(story);
 
 
-
+    
 
 
     // console.log(dataStory);
@@ -48,7 +52,14 @@ export default function Story({ Username }) {
         const newStory = story.filter(item => item.id != id);
         setStory(newStory);
     }
-
+    const handle_Detail = (id) => {
+        fetch(
+            `${API}/${id}`,
+            { method: 'GET' }
+        ).then((res) => res.json())
+            .then((resJson) => setStory(resJson))
+            .catch((error) => console.log(error));
+    }
 
     const handle_Delete = (id) => {
         setShowLoading(true);
@@ -66,7 +77,7 @@ export default function Story({ Username }) {
         setCategory(data.category);
         setTotal_chapters(data.total_chapters);
         setImage(data.image);
-
+        setIs_full(data.is_full);
         setIsUpdate(data.id); // set isUpdate = id -> neu co id thi se hieu la true, con k co id thi se la undefined -> hieu la false
     }
     const handleAddSubject = (resJson) => {
@@ -95,7 +106,8 @@ export default function Story({ Username }) {
             name: name,
             category: category,
             image: image,
-            total_chapters: total_chapters
+            total_chapters: total_chapters,
+            is_full: is_full
         };
         // const subject = {
         //     className,
@@ -142,17 +154,39 @@ export default function Story({ Username }) {
         const subject = story.find((item) => item.id == id);
 
         setModalData(subject);
+        console.log(subject);
         setShowModal(true);
+    }
+    const showDetailModal1 = (id) => {
+        const subject = story.find((item) => item.id == id);
+
+        setModalData(subject);
+        console.log(subject);
+        setShowDetail(true);
     }
 
     const handleCancle = () => {
         setShowModal(false);
     }
 
-
-
-
     //-----------------------------------
+    const deleteSubject = (id) => {
+        const newSubject = story.filter(item => item.id != id);
+        setStory(newSubject);
+    }
+
+    const handleDelete = (id) => {
+        setShowLoading(true);
+        deleteSubject(id);
+    
+        fetch(
+            `${API}/${id}`,
+            { method: 'DELETE' }
+        ).then(() => {
+            setShowLoading(false);
+        })
+            .catch((error) => console.log(error));
+    }
     return (
         <View >
 
@@ -185,21 +219,22 @@ export default function Story({ Username }) {
                 <FlatList
                     data={story}
                     renderItem={({ item }) => (
-                        <View>
-                            <Image style={{ width: 50, height: 50 }} source={{ uri: item.image }} />
-                            <Text>{item.id}</Text>
+                        <View style={style.view}>
+                            <Image style={{ width: 50, height: 50, borderRadius: 50 }} source={{ uri: item.image }} />
                             <Text>{item.name}</Text>
                             <Text>{item.category}</Text>
                             <Text>{item.total_chapters}</Text>
-                            <Button title='EDIT' onPress={() => showEditModal(item.id)} />
-                            <Button title="DELETE" onPress={() => handle_Delete(item.id)} />
-                            <Button title="Detail" onPress={() => setShowModal(true)} />
+                            <Text>{item.is_full ? "Con" : "Het"} </Text>
+                            <Button title="Edit" onPress={() => showEditModal(item.id)} />
+                            <Button title="Delete" onPress={() => handleDelete(item.id)} />
+                            <Button title="Detail" onPress={() => showDetailModal1(item.id)} />
+
 
                         </View>
                     )}
                     keyExtractor={(item, story) => story}
-                />
 
+                />
             </View>
 
             {/* Show Detal */}
@@ -222,7 +257,10 @@ export default function Story({ Username }) {
                                     marginTop: 86,
                                     backgroundColor: '#e4e4e4',
                                 }}>
-
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text  >{`Image URL`}</Text>
+                                        <TextInput value={image} onChangeText={(value) => setImage(value)} />
+                                    </View>
                                     <View style={{ flexDirection: 'row' }}>
                                         <Text  >{`Tên Truyện`}</Text>
                                         <TextInput value={name} onChangeText={(value) => setName(value)} />
@@ -235,14 +273,11 @@ export default function Story({ Username }) {
                                         <Text >{`So chuong`}</Text>
                                         <TextInput value={total_chapters} onChangeText={(value) => setTotal_chapters(value)} />
                                     </View>
-                                    {/* <View style={{ flexDirection: 'row' }}>
-                                    <Text >{`Tình Trạng`}</Text>
-                                    <Text>{`: ${item.status ? "con" : 'Het'}`}</Text>
-                                </View> */}
-                                    {/* <View style={{ flexDirection: 'column' }}>
-                                    <Text >{`Nội dung`}</Text>
-                                    <Text style={{ paddingVertical: 10, paddingHorizontal: 20 }}>{`  ${item.content}`}</Text>
-                                </View> */}
+                                    <View>
+                                        <Text>{`Tinh trang`}</Text>
+                                        <Switch value={is_full} onValueChange={() => setIs_full(!is_full)} />
+
+                                    </View>
 
 
                                 </View>
@@ -258,6 +293,54 @@ export default function Story({ Username }) {
                 </View>
             </View>
 
+            <View>
+                <View>
+                    <Modal visible={showDetail}>
+                        <View style={{ flex: 1, }}>
+                            <View>
+                                <View style={{
+                                    flexDirection: 'row',
+                                    borderRadius: 20,
+                                }} >
+                                    {/* <Image source={{ uri: item.image }}
+                                    style={{ width: 50, height: 50, borderRadius: 50 }} /> */}
+                                </View>
+                                <View style={{
+                                    height: '45%',
+                                    borderRadius: 20,
+                                    margin: 16,
+                                    marginTop: 86,
+                                    backgroundColor: '#e4e4e4',
+                                }}>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text  >{`Image URL`}</Text>
+                                        <Image style={{ width: 50, height: 50, borderRadius: 50 }} source={{ uri: image }} />
+                                    </View>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text  >{`Tên Truyện`}</Text>
+                                        <Text>{`: ${name}`} </Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text >{`Thể Loại`}</Text>
+                                        <Text>{`: ${category}`} </Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text >{`So chuong`}</Text>
+                                        <Text>{`: ${total_chapters}`}</Text>
+                                    </View>
+
+
+
+                                </View>
+
+                                <Button
+                                    title='Cancle' onPress={() => { setShowDetail(false) }}
+                                />
+                            </View>
+                        </View>
+                    </Modal>
+                </View>
+            </View>
             {/*  */}
         </View>
 
@@ -278,5 +361,15 @@ const style = StyleSheet.create({
         width: 200,
         height: 200,
         borderRadius: 200
+    },
+    view: {
+        borderWidth: 1,
+        marginVertical: 10,
+
+        borderColor: '#FFFFFF',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        backgroundColor: '#B2B2B2',
+        borderRadius: 20
     }
 });
