@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, FlatList, Image, Button, Modal, ImageBackground, ScrollView, TextInput, Switch, Alert } from 'react-native';
 
 
-import StoryItem from './story-item';
-import indexjs from './index';
 export default function Story({ Username }) {
     const API = 'https://5e64622ea49c2100161069a0.mockapi.io/story'
     const [story, setStory] = useState([]);
